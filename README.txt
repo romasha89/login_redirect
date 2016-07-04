@@ -6,6 +6,7 @@ parameter after logging in. Allows redirect towards non-Drupal location.
 
 Author(s):
   legendm33066 <http://drupal.org/user/1290564>
+  RoMasHa89    <https://www.drupal.org/user/3468239> (Drupal 8 port)
 
 Installation
 ------------
