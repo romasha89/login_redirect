@@ -1,0 +1,7 @@
+login_redirect.login_redirect_form:
+  title: 'Login Redirect Settings'
+  route_name: login_redirect.settings
+  description: 'Adjust Login Redirect settings.'
+  parent: system.admin_config_system
+  weight: 99
+  menu_name: admin_menu

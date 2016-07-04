@@ -1,0 +1,8 @@
+login_redirect.settings:
+  type: mapping
+  label: Settings
+  mapping:
+    login_redirect_status:
+      type: integer
+    login_redirect_parameter_name:
+      type: string

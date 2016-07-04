@@ -1,0 +1,110 @@
+<?php
+
+/**
+ * @file
+ * Allows redirects according to an URL parameter after logins.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use \Symfony\Component\HttpFoundation\RedirectResponse;
+
+/**
+ * Implements of hook_help().
+ */
+function login_redirect_help($path, $arg) {
+  $elements = array();
+  switch ($path) {
+    case 'help.page.login_redirect':
+
+      $elements['about']['title'] = [
+        '#type' => 'markup',
+        '#markup' => '<h3>' . t('About') . '</h3>'
+      ];
+      $elements['about']['content'] = [
+        '#type' => 'markup',
+        '#title' => t('About'),
+        '#markup' => '<p>' . t('A simple solution to allow redirects toward non-Drupal URLs after a successful user login.') . '</p>'
+      ];
+
+      $elements['authors']['title'] = [
+        '#type' => 'markup',
+        '#markup' => '<h3>' . t('Author(s):') . '</h3>'
+      ];
+      $elements['authors']['content'] = [
+        '#type' => 'markup',
+        '#markup' => '<p>' . t('RoMasHa89 &lt;https://api.drupal.org/user/755471&gt;') . '</p>'
+      ];
+
+        $items = array(
+        \Drupal::l(t('Enable the module'), \Drupal\Core\Url::fromRoute('system.modules_list')),
+        \Drupal::l(t('Configure the module'), \Drupal\Core\Url::fromRoute('login_redirect.settings')));
+      $elements['links'] = [
+        '#theme' => 'item_list',
+        '#items' => $items,
+      ];
+
+      $elements['uses']['title'] = [
+        '#type' => 'markup',
+        '#markup' => '<h3>' . t('Uses') . '</h3>'
+      ];
+      $elements['uses']['content'] = [
+        '#type' => 'markup',
+        '#markup' => t('Visit the Login page (usually user/login) and append the redirection URL
+                        parameter using the parameter name defined in the @settings.
+                        For example, if you set the parameter name to
+                        "destination", then you would visit user/login?destination=http://www.google.com
+                        to have the user redirected to Google (http://www.google.com) after logging in.',
+                        array('@settings' => \Drupal::l(t('Settings Page'), \Drupal\Core\Url::fromRoute('login_redirect.settings')))),
+      ];
+
+      $elements['notice']['title'] = [
+        '#type' => 'markup',
+        '#markup' => '<font color="red">' . t('Notice') . '</font>'
+      ];
+      $elements['notice']['content'] = [
+        '#type' => 'markup',
+        '#markup' => '<p>' . '<font color="red">' . t('The URL passed parameter ALWAYS overrides the "destination" parameter handled by Drupal itself.') . '</font>' . '</p>'
+      ];
+
+      return \Drupal::service('renderer')->render($elements);
+  }
+
+  return false;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function login_redirect_form_user_login_form_alter(&$form, &$form_state, $form_id) {
+  $status = \Drupal::config('login_redirect.settings')->get('login_redirect_status');
+  if ($status !== 0) {
+    $parameter_name = \Drupal::config('login_redirect.settings')->get('login_redirect_parameter_name');
+    $params = \Drupal\Component\Utility\UrlHelper::filterQueryParameters(Drupal::request()->query->all());
+    if (isset($params[$parameter_name])) {
+      if (!empty($params[$parameter_name])) {
+        $destination = \Drupal\Component\Utility\SafeMarkup::checkPlain(\Drupal\Component\Utility\Xss::filter($params[$parameter_name]));
+        if (\Drupal\Component\Utility\UrlHelper::isValid($destination, TRUE)) {
+          $form['destination'] = array(
+            '#type' => 'value',
+            '#value' => $destination,
+          );
+          $form['#submit'][] = 'login_redirect_user_login_form_submit';
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Perform redirect, if URL present and valid.
+ */
+function login_redirect_user_login_form_submit(&$form, FormStateInterface &$form_state) {
+  if ($form_state->hasValue('destination')) {
+    $destination = \Drupal\Component\Utility\SafeMarkup::checkPlain(\Drupal\Component\Utility\Xss::filter($form_state->getValue('destination')));
+      if (\Drupal\Component\Utility\UrlHelper::isValid($destination, TRUE)) {
+        $response = new RedirectResponse($destination);
+        $response->send();
+        return $response;
+    }
+  }
+}
