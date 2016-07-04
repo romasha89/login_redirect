@@ -32,7 +32,11 @@ function login_redirect_help($path, $arg) {
       ];
       $elements['authors']['content'] = [
         '#type' => 'markup',
-        '#markup' => '<p>' . t('RoMasHa89 &lt;https://www.drupal.org/user/3468239&gt;') . '</p>'
+        '#markup' => '<p>' . t('legendm33066 &lt;http://drupal.org/user/1290564&gt;') . '</p>'
+      ];
+      $elements['authors']['content'] = [
+        '#type' => 'markup',
+        '#markup' => '<p>' . t('RoMasHa89 &lt;https://www.drupal.org/user/3468239&gt;  (Drupal 8 port)') . '</p>'
       ];
 
         $items = array(
