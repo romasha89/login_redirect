@@ -86,7 +86,7 @@ class LoginRedirectSettingsForm extends ConfigFormBase
       '#type' => 'textfield',
       '#prefix' => '<div id="parameter-name">',
       '#suffix' => '</div>',
-      '#title' => t('Parameter Name'),
+      '#title' => t('Query Parameter Name'),
       '#default_value' => $config->get('login_redirect_parameter_name'),
       '#description' => t('Enter user defined query parameter name same as we have q in drupal core. For example if the parameter name is set to "destination", then you would visit user/login&destination=(redirect destination).'),
     );
@@ -108,10 +108,10 @@ class LoginRedirectSettingsForm extends ConfigFormBase
     }
     $form['login_redirect_roles'] = array(
       '#type' => 'checkboxes',
-      '#title' => t('Roles'),
+      '#title' => t('User Roles'),
       '#options' => (array) $roles_array,
       '#default_value' => $config->get('login_redirect_roles') ? $config->get('login_redirect_roles') : array(),
-      '#description' => t('Select Roles to avail the redirect option.'),
+      '#description' => t('Select User Roles to avail the redirect option.'),
     );
 
     return parent::buildForm($form, $form_state);
