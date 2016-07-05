@@ -4,5 +4,13 @@ login_redirect.settings:
   mapping:
     login_redirect_status:
       type: integer
+    login_force_default_redirect_status:
+      type: integer
+    login_force_default_redirect_override_status:
+      type: integer
+    login_force_default_redirect_url:
+      type: string
     login_redirect_parameter_name:
       type: string
+    login_redirect_roles:
+      type: array

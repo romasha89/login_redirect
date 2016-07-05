@@ -7,9 +7,13 @@
 
 use Drupal\Core\Form\FormStateInterface;
 use \Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\Component\Utility\UrlHelper;
+use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Core\Url;
+use Drupal\Component\Utility\Xss;
 
 /**
- * Implements of hook_help().
+ * Implements hook_help().
  */
 function login_redirect_help($path, $arg) {
   $elements = array();
@@ -18,30 +22,32 @@ function login_redirect_help($path, $arg) {
 
       $elements['about']['title'] = [
         '#type' => 'markup',
-        '#markup' => '<h3>' . t('About') . '</h3>'
+        '#markup' => '<h3>' . t('About') . '</h3>',
       ];
       $elements['about']['content'] = [
         '#type' => 'markup',
         '#title' => t('About'),
-        '#markup' => '<p>' . t('A simple solution to allow redirects toward non-Drupal URLs after a successful user login.') . '</p>'
+        '#markup' => '<p>' . t('A simple solution to allow redirects toward non-Drupal URLs after a successful user login.') . '</p>',
       ];
 
       $elements['authors']['title'] = [
         '#type' => 'markup',
-        '#markup' => '<h3>' . t('Author(s):') . '</h3>'
+        '#markup' => '<h3>' . t('Author(s):') . '</h3>',
       ];
       $elements['authors']['content'] = [
         '#type' => 'markup',
-        '#markup' => '<p>' . t('legendm33066 &lt;http://drupal.org/user/1290564&gt;') . '</p>'
+        '#markup' => '<p>' . t('legendm33066 &lt;http://drupal.org/user/1290564&gt;') . '</p>',
       ];
       $elements['authors']['content'] = [
         '#type' => 'markup',
-        '#markup' => '<p>' . t('RoMasHa89 &lt;https://www.drupal.org/user/3468239&gt;  (Drupal 8 port)') . '</p>'
+        '#markup' => '<p>' . t('RoMasHa89 &lt;https://www.drupal.org/user/3468239&gt;  (Drupal 8 port)') . '</p>',
       ];
 
-        $items = array(
-        \Drupal::l(t('Enable the module'), \Drupal\Core\Url::fromRoute('system.modules_list')),
-        \Drupal::l(t('Configure the module'), \Drupal\Core\Url::fromRoute('login_redirect.settings')));
+      $items = array(
+        \Drupal::l(t('Enable the module'), Url::fromRoute('system.modules_list')),
+        \Drupal::l(t('Configure the module'), Url::fromRoute('login_redirect.settings')),
+      );
+
       $elements['links'] = [
         '#theme' => 'item_list',
         '#items' => $items,
@@ -49,7 +55,7 @@ function login_redirect_help($path, $arg) {
 
       $elements['uses']['title'] = [
         '#type' => 'markup',
-        '#markup' => '<h3>' . t('Uses') . '</h3>'
+        '#markup' => '<h3>' . t('Uses') . '</h3>',
       ];
       $elements['uses']['content'] = [
         '#type' => 'markup',
@@ -58,43 +64,74 @@ function login_redirect_help($path, $arg) {
                         For example, if you set the parameter name to
                         "destination", then you would visit user/login?destination=http://www.google.com
                         to have the user redirected to Google (http://www.google.com) after logging in.',
-                        array('@settings' => \Drupal::l(t('Settings Page'), \Drupal\Core\Url::fromRoute('login_redirect.settings')))),
+                        array('@settings' => \Drupal::l(t('Settings Page'), Url::fromRoute('login_redirect.settings')))),
       ];
 
       $elements['notice']['title'] = [
         '#type' => 'markup',
-        '#markup' => '<font color="red">' . t('Notice') . '</font>'
+        '#markup' => '<font color="red">' . t('Notice') . '</font>',
       ];
       $elements['notice']['content'] = [
         '#type' => 'markup',
-        '#markup' => '<p>' . '<font color="red">' . t('The URL passed parameter ALWAYS overrides the "destination" parameter handled by Drupal itself.') . '</font>' . '</p>'
+        '#markup' => '<p>' . '<font color="red">' . t('The URL passed parameter ALWAYS overrides the "destination" parameter handled by Drupal itself.') . '</font>' . '</p>',
       ];
 
       return \Drupal::service('renderer')->render($elements);
   }
 
-  return false;
+  return FALSE;
 }
 
 /**
  * Implements hook_form_alter().
  */
-function login_redirect_form_user_login_form_alter(&$form, &$form_state, $form_id) {
+function login_redirect_form_user_login_form_alter(&$form, FormStateInterface &$form_state, $form_id) {
+  $default_parameter_name = 'destination';
+
   $status = \Drupal::config('login_redirect.settings')->get('login_redirect_status');
-  if ($status !== 0) {
+  if (!$status) {
+    return;
+  }
+
+  $user_input = $form_state->getUserInput();
+  if (!empty($user_input['name']) && !empty($user_input['pass'])) {
+    $user = user_load_by_name($user_input['name']);
+  }
+  if (!empty($user)) {
+    if (!array_intersect(array_values($user->getRoles()), \Drupal::config('login_redirect.settings')->get('login_redirect_roles', array()))) {
+      return;
+    }
+  }
+  else {
+    return;
+  }
+
+  $use_default_parameter_name = \Drupal::config('login_redirect.settings')->get('login_redirect_use_default_parameter_name');
+  if ($use_default_parameter_name) {
+    $parameter_name = $default_parameter_name;
+  }
+  else {
     $parameter_name = \Drupal::config('login_redirect.settings')->get('login_redirect_parameter_name');
-    $params = \Drupal\Component\Utility\UrlHelper::filterQueryParameters(Drupal::request()->query->all());
-    if (isset($params[$parameter_name])) {
-      if (!empty($params[$parameter_name])) {
-        $destination = \Drupal\Component\Utility\SafeMarkup::checkPlain(\Drupal\Component\Utility\Xss::filter($params[$parameter_name]));
-        if (\Drupal\Component\Utility\UrlHelper::isValid($destination, TRUE)) {
-          $form['destination'] = array(
-            '#type' => 'value',
-            '#value' => $destination,
-          );
-          $form['#submit'][] = 'login_redirect_user_login_form_submit';
-        }
+  }
+
+  $params = UrlHelper::filterQueryParameters(Drupal::request()->query->all());
+  $force_status = \Drupal::config('login_redirect.settings')->get('login_force_default_redirect_status');
+  $force_override = \Drupal::config('login_redirect.settings')->get('login_force_default_redirect_override_status');
+  if (!empty($params[$parameter_name]) || $force_status) {
+    if (($force_status && (empty($params[$parameter_name]) && empty($params[$default_parameter_name]))) || ($force_status && $force_override)) {
+      $destination = SafeMarkup::checkPlain(Xss::filter(\Drupal::config('login_redirect.settings')->get('login_force_default_redirect_url')));
+    }
+    else {
+      if (isset($params[$parameter_name])) {
+        $destination = SafeMarkup::checkPlain(Xss::filter($params[$parameter_name]));
       }
+    }
+    if (!empty($destination)) {
+      $form['destination'] = array(
+        '#type' => 'value',
+        '#value' => $destination,
+      );
+      $form['#submit'][] = 'login_redirect_user_login_form_submit';
     }
   }
 }
@@ -102,13 +139,17 @@ function login_redirect_form_user_login_form_alter(&$form, &$form_state, $form_i
 /**
  * Perform redirect, if URL present and valid.
  */
-function login_redirect_user_login_form_submit(&$form, FormStateInterface &$form_state) {
+function login_redirect_user_login_form_submit(&$form, FormStateInterface &$form_state)
+{
   if ($form_state->hasValue('destination')) {
-    $destination = \Drupal\Component\Utility\SafeMarkup::checkPlain(\Drupal\Component\Utility\Xss::filter($form_state->getValue('destination')));
-      if (\Drupal\Component\Utility\UrlHelper::isValid($destination, TRUE)) {
-        $response = new RedirectResponse($destination);
-        $response->send();
-        return $response;
+    $destination = SafeMarkup::checkPlain(Xss::filter($form_state->getValue('destination')));
+    // Check if URL is external and valid or internal without validity check.
+    if ((UrlHelper::isExternal($destination) && UrlHelper::isValid($destination, TRUE)) || !(UrlHelper::isExternal($destination))) {
+      $response = new RedirectResponse($destination);
+      $response->send();
+      return $response;
     }
   }
+
+  return TRUE;
 }
