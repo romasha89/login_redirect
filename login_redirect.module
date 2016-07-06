@@ -64,7 +64,7 @@ function login_redirect_help($path, $arg) {
                         For example, if you set the parameter name to
                         "destination", then you would visit user/login?destination=http://www.google.com
                         to have the user redirected to Google (http://www.google.com) after logging in.',
-                        array('@settings' => \Drupal::l(t('Settings Page'), Url::fromRoute('login_redirect.settings')))),
+          array('@settings' => \Drupal::l(t('Settings Page'), Url::fromRoute('login_redirect.settings')))),
       ];
 
       $elements['notice']['title'] = [
@@ -88,7 +88,8 @@ function login_redirect_help($path, $arg) {
 function login_redirect_form_user_login_form_alter(&$form, FormStateInterface &$form_state, $form_id) {
   $default_parameter_name = 'destination';
 
-  $status = \Drupal::config('login_redirect.settings')->get('login_redirect_status');
+  $status = \Drupal::config('login_redirect.settings')
+    ->get('login_redirect_status');
   if (!$status) {
     return;
   }
@@ -98,7 +99,9 @@ function login_redirect_form_user_login_form_alter(&$form, FormStateInterface &$
     $user = user_load_by_name($user_input['name']);
   }
   if (!empty($user)) {
-    if (!array_intersect(array_values($user->getRoles()), \Drupal::config('login_redirect.settings')->get('login_redirect_roles', array()))) {
+    if (!array_intersect(array_values($user->getRoles()), \Drupal::config('login_redirect.settings')
+        ->get('login_redirect_roles', array()))
+    ) {
       return;
     }
   }
@@ -106,20 +109,25 @@ function login_redirect_form_user_login_form_alter(&$form, FormStateInterface &$
     return;
   }
 
-  $use_default_parameter_name = \Drupal::config('login_redirect.settings')->get('login_redirect_use_default_parameter_name');
+  $use_default_parameter_name = \Drupal::config('login_redirect.settings')
+    ->get('login_redirect_use_default_parameter_name');
   if ($use_default_parameter_name) {
     $parameter_name = $default_parameter_name;
   }
   else {
-    $parameter_name = \Drupal::config('login_redirect.settings')->get('login_redirect_parameter_name');
+    $parameter_name = \Drupal::config('login_redirect.settings')
+      ->get('login_redirect_parameter_name');
   }
 
   $params = UrlHelper::filterQueryParameters(Drupal::request()->query->all());
-  $force_status = \Drupal::config('login_redirect.settings')->get('login_force_default_redirect_status');
-  $force_override = \Drupal::config('login_redirect.settings')->get('login_force_default_redirect_override_status');
+  $force_status = \Drupal::config('login_redirect.settings')
+    ->get('login_force_default_redirect_status');
+  $force_override = \Drupal::config('login_redirect.settings')
+    ->get('login_force_default_redirect_override_status');
   if (!empty($params[$parameter_name]) || $force_status) {
     if (($force_status && (empty($params[$parameter_name]) && empty($params[$default_parameter_name]))) || ($force_status && $force_override)) {
-      $destination = SafeMarkup::checkPlain(Xss::filter(\Drupal::config('login_redirect.settings')->get('login_force_default_redirect_url')));
+      $destination = SafeMarkup::checkPlain(Xss::filter(\Drupal::config('login_redirect.settings')
+            ->get('login_force_default_redirect_url')));
     }
     else {
       if (isset($params[$parameter_name])) {
@@ -139,8 +147,7 @@ function login_redirect_form_user_login_form_alter(&$form, FormStateInterface &$
 /**
  * Perform redirect, if URL present and valid.
  */
-function login_redirect_user_login_form_submit(&$form, FormStateInterface &$form_state)
-{
+function login_redirect_user_login_form_submit(&$form, FormStateInterface &$form_state) {
   if ($form_state->hasValue('destination')) {
     $destination = SafeMarkup::checkPlain(Xss::filter($form_state->getValue('destination')));
     // Check if URL is external and valid or internal without validity check.

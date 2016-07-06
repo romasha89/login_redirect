@@ -16,8 +16,7 @@ use Drupal\Component\Utility\UrlHelper;
  *
  * @package Drupal\login_redirect\Form
  */
-class LoginRedirectSettingsForm extends ConfigFormBase
-{
+class LoginRedirectSettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritdoc}
@@ -139,8 +138,12 @@ class LoginRedirectSettingsForm extends ConfigFormBase
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     if (($form_state->hasValue('parameter_name') && !is_numeric($form_state->getValue('parameter_name')))) {
-      $this->config('login_redirect.settings')->set('login_redirect_parameter_name', $form_state->getValue('parameter_name'))->save();
-      $this->config('login_redirect.settings')->set('login_redirect_status', $form_state->getValue('status'))->save();
+      $this->config('login_redirect.settings')
+        ->set('login_redirect_parameter_name', $form_state->getValue('parameter_name'))
+        ->save();
+      $this->config('login_redirect.settings')
+        ->set('login_redirect_status', $form_state->getValue('status'))
+        ->save();
     }
     else {
       drupal_set_message(t('The parameter name must consists of only alphabetical letters and cannot be left empty. The module was disabled.'), 'error');
@@ -148,15 +151,23 @@ class LoginRedirectSettingsForm extends ConfigFormBase
 
     $url = $form_state->getValue('force_redirect_url');
     if ((UrlHelper::isExternal($url) && UrlHelper::isValid($url, TRUE)) || !(UrlHelper::isExternal($url))) {
-      $this->config('login_redirect.settings')->set('login_force_default_redirect_url', $form_state->getValue('force_redirect_url'))->save();
-      $this->config('login_redirect.settings')->set('login_force_default_redirect_status', $form_state->getValue('force_redirect_status'))->save();
+      $this->config('login_redirect.settings')
+        ->set('login_force_default_redirect_url', $form_state->getValue('force_redirect_url'))
+        ->save();
+      $this->config('login_redirect.settings')
+        ->set('login_force_default_redirect_status', $form_state->getValue('force_redirect_status'))
+        ->save();
     }
     else {
       drupal_set_message(t('Check force redirection URL validity.'), 'error');
     }
 
-    $this->config('login_redirect.settings')->set('login_force_default_redirect_override_status', $form_state->getValue('force_redirect_override_status'))->save();
-    $this->config('login_redirect.settings')->set('login_redirect_roles', $form_state->getValue('login_redirect_roles'))->save();
+    $this->config('login_redirect.settings')
+      ->set('login_force_default_redirect_override_status', $form_state->getValue('force_redirect_override_status'))
+      ->save();
+    $this->config('login_redirect.settings')
+      ->set('login_redirect_roles', $form_state->getValue('login_redirect_roles'))
+      ->save();
   }
 
 }

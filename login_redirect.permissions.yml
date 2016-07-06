@@ -1,0 +1,4 @@
+login_redirect config_permission:
+    title: 'Login Redirect configuration access'
+    description: 'Allow access to Login Redirect configuration page'
+    restrict access: false

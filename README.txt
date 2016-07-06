@@ -26,3 +26,7 @@ parameter using the parameter name defined in the Settings page
 For example, if you set the parameter name to
 "destination", then you would visit user/login?destination=http://www.google.com
 to have the user redirected to Google (http://www.google.com) after logging in.
+
+Additional features (Drupal 8):
+- Force redirection to defined URL after user authentication.
+- UserRole - depended module func.
