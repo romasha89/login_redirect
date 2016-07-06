@@ -1,4 +1,0 @@
-login_redirect config_permission:
-    title: 'Login Redirect configuration access'
-    description: 'Allow access to Login Redirect configuration paeg'
-    restrict access: false
