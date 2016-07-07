@@ -11,13 +11,14 @@ use Drupal\Component\Utility\UrlHelper;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Url;
 use Drupal\Component\Utility\Xss;
+use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Implements hook_help().
  */
-function login_redirect_help($path, $arg) {
+function login_redirect_help($route_name, RouteMatchInterface $route_match) {
   $elements = array();
-  switch ($path) {
+  switch ($route_name) {
     case 'help.page.login_redirect':
 
       $elements['about']['title'] = [
